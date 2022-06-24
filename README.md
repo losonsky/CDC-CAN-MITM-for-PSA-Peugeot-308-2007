@@ -20,4 +20,4 @@ Longer text lines are scrooling just because count of characters is limited on E
 
 Personally I added simple 5V relay - by-pass (without Arduino powered through USB, it connects both CAN sides together so it's doing true-by-pass)
 
-
+Test all
