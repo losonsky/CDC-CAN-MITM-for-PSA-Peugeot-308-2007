@@ -8,10 +8,10 @@ Radio needs only 3 kinds of messages to stay powered on, car's "power state" and
 
 You can print any incomming message even from radio or from rest of the car to Arduino's serial port, forward it between both CAN modules (i.e. with changed content before forwarding), drop it or whatever you want...
 Arduino accepts simple message format on USB serial CDC and prints them on car's EMF display.
-message starting with "0" i.e. <code>echo "0your magic text" >/dev/ttyACM0</code> will be scroolling text "your magic text" in the 1st line of EMF (where you can see radio station RDS name).
+message starting with "0" i.e. <code>echo "0your magic text" >/dev/ttyACM0</code> will be scroolling text "your magic text" in the 1st line of EMF (where you can see radio station RDS name). Behavior for the 1st character in message follows:
 <code>
 => "0...." 1st RDS line
 => "1...." 2nd RDTXT line
-=> "20" disable custom texts on EMF
-=> "21" enable custom texts on EMF
+=> "20" disables custom texts on EMF
+=> "21" enables custom texts on EMF
 </code>
