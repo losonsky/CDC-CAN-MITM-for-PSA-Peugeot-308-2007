@@ -18,3 +18,5 @@ message starting with "0" i.e. <code>echo "0your magic text" >/dev/ttyACM0</code
 
 Longer text lines are scrooling just because count of characters is limited on EMF in each line (i.e. length of RDS text field is only 8 characters). You can change the scrooling speed in sketch by simply changing related timers.
 
+Personally I added simple 5V relay - by-pass (without Arduino powered through USB, it connects both CAN sides together so it's doing true-by-pass)
+
