@@ -10,8 +10,11 @@ You can print any incomming message even from radio or from rest of the car to A
 Arduino accepts simple message format on USB serial CDC and prints them on car's EMF display.
 message starting with "0" i.e. <code>echo "0your magic text" >/dev/ttyACM0</code> will be scroolling text "your magic text" in the 1st line of EMF (where you can see radio station RDS name). Behavior for the 1st character in message follows:
 <code>
-=> "0...." 1st RDS line
-=> "1...." 2nd RDTXT line
+=> "0...." 1st RDS text line
+=> "1...." 2nd RDTXT text line
 => "20" disables custom texts on EMF
 => "21" enables custom texts on EMF
 </code>
+
+Longer text lines are scrooling just because count of characters is limited on EMF in each line (i.e. length of RDS text field is only 8 characters). You can change the scrooling speed in sketch by simply changing related timers.
+
