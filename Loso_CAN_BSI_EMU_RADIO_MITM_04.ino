@@ -1,6 +1,8 @@
 // CAN MITM module between RD45 and the rest of the Peugeot 308 (2007) car
 // 125kbps CAN-INFO no termination resistor on MCP2515 SPI modules => no jumpers
 // pinout https://frenchcarforum.co.uk/forum/viewtopic.php?t=65388
+// CAN0 connected to RD45
+// CAN1 connected to rest of CAN-INFO
 
 #define SEND_FAKE_BSI_TO_RADIO
 
