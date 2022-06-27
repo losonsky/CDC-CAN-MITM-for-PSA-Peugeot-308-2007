@@ -40,7 +40,7 @@ uint8_t fakeSCR[256]; // CDC "21" -> enable fake strings on screen, CDC "20" -> 
 char MsgString[256]; // serial string
 char str_tmp0[12]; // used for dtostr float
 
-uint32_t now_millis; // to do not ask millis()too often 
+uint32_t now_millis; // to do not ask millis()too often
 
 uint32_t Timer100_every_ms =  100; // how often the Timer is triggered
 uint32_t next_Timer100_check; // computed value when the Timer is triggered next time
@@ -447,6 +447,7 @@ void loop() {
 
       default:
         CAN1.sendMsgBuf(rxId, 0, len, rxBuf); // from RADIO to ALL
+        /*
         dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
         sprintf(MsgString, "%s RAD --> %.3lX %d", str_tmp0, rxId, len);
         Serial.print(MsgString);
@@ -456,6 +457,7 @@ void loop() {
           Serial.print(MsgString);
         }
         Serial.println();
+        */
     }
   }
 
@@ -552,25 +554,25 @@ void loop() {
         }
         Serial.println(MsgString);
         break;
-
-      case 0x036: // receive only print and drop, we are master here
-        counter036 ++;
-        if (counter036 >= SKIP_036_COUNT) {
-          counter036 = 0;
-          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-          sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
-          if (rxBuf[4] & 0b00000001) {
-            sprintf(MsgString, "%s, IGN_1", MsgString);
-          } else {
-            sprintf(MsgString, "%s, IGN_0", MsgString);
-          }
-          Serial.println(MsgString);
-        }
-        break;
-
+      /*
+            case 0x036: // receive only print and drop, we are master here
+              counter036 ++;
+              if (counter036 >= SKIP_036_COUNT) {
+                counter036 = 0;
+                dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+                sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
+                if (rxBuf[4] & 0b00000001) {
+                  sprintf(MsgString, "%s, IGN_1", MsgString);
+                } else {
+                  sprintf(MsgString, "%s, IGN_0", MsgString);
+                }
+                Serial.println(MsgString);
+              }
+              break;
+      */
 
       // drop
-      //case 0x036: // drop Ignition state, we are master here
+      case 0x036: // drop Ignition state, we are master here
       case 0x2B6: // BSI last 8 VIN
         break;
 
@@ -635,6 +637,7 @@ void loop() {
 
       default:
         CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
+        /*
         dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
         sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
         Serial.print(MsgString);
@@ -644,6 +647,7 @@ void loop() {
           Serial.print(MsgString);
         }
         Serial.println();
+        */
     }
   }
 
