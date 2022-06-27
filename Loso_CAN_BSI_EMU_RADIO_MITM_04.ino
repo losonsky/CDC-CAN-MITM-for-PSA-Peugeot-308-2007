@@ -28,6 +28,7 @@ MCP_CAN CAN0(CAN0_CS);
 MCP_CAN CAN1(CAN1_CS);
 
 uint8_t data[8];
+uint8_t ambient_temperature = 0x63; // 10 degrees of Celsius init value
 
 uint8_t longRDS[256]; // CDC "0 whatever string \n" -> " whatever string " in 1st line
 uint8_t longRDSpointer = 0; // text rotation
@@ -233,7 +234,7 @@ void loop() {
     data[3] = 0xA6; // odom
     data[4] = 0xEC; // odom
     data[5] = 0x63; // ??????? temperature 10 degrees of Celsius
-    data[6] = 0x63; // ambient temperature 10 degrees of Celsius on EMF
+    data[6] = ambient_temperature; // ambient temperature 10 degrees of Celsius on EMF
     data[7] = 0x00; // directions light
     delay(1);
 #ifdef SEND_FAKE_BSI_TO_RADIO
@@ -448,15 +449,15 @@ void loop() {
       default:
         CAN1.sendMsgBuf(rxId, 0, len, rxBuf); // from RADIO to ALL
         /*
-        dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-        sprintf(MsgString, "%s RAD --> %.3lX %d", str_tmp0, rxId, len);
-        Serial.print(MsgString);
-        for (byte i = 0; i < len; i ++) {
+          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+          sprintf(MsgString, "%s RAD --> %.3lX %d", str_tmp0, rxId, len);
+          Serial.print(MsgString);
+          for (byte i = 0; i < len; i ++) {
           Serial.print(", ");
           sprintf(MsgString, "%.2X", rxBuf[i]);
           Serial.print(MsgString);
-        }
-        Serial.println();
+          }
+          Serial.println();
         */
     }
   }
@@ -517,6 +518,8 @@ void loop() {
           uint32_t odometer = (uint32_t)((uint32_t)rxBuf[2] << 16 | (uint32_t)rxBuf[3] << 8 | (uint32_t)rxBuf[4]);
           dtostrf(0.1 * odometer, 8, 1, str_tmp0);
           sprintf(MsgString, "%s, Odom = %s", MsgString, str_tmp0);
+
+          ambient_temperature = rxBuf[6];
 
           float temperature = 0.5 * ((uint8_t)rxBuf[6] - 79);
           dtostrf(temperature, 5, 1, str_tmp0);
@@ -638,15 +641,15 @@ void loop() {
       default:
         CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
         /*
-        dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-        sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
-        Serial.print(MsgString);
-        for (byte i = 0; i < len; i ++) {
+          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+          sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
+          Serial.print(MsgString);
+          for (byte i = 0; i < len; i ++) {
           Serial.print(", ");
           sprintf(MsgString, "%.2X", rxBuf[i]);
           Serial.print(MsgString);
-        }
-        Serial.println();
+          }
+          Serial.println();
         */
     }
   }
