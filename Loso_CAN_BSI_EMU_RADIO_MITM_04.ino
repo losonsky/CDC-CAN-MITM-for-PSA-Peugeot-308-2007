@@ -9,7 +9,7 @@
 // skip COUNT of messages and then print
 #define SKIP_0E6_COUNT 50
 #define SKIP_036_COUNT 50
-#define SKIP_0F6_COUNT 10
+#define SKIP_0F6_COUNT  1
 
 
 #include <mcp_can.h>
@@ -65,13 +65,13 @@ uint32_t next_Timer300_check;
 void setup() {
   pinMode(CAN0_INT, INPUT);
   pinMode(CAN1_INT, INPUT);
-  while (CAN0.begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ) != CAN_OK) { // blink TX LED until succesfull module init
+  while (CAN0.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) != CAN_OK) { // blink TX LED until succesfull module init
     TXLED1;
     delay(300);
     TXLED0;
     delay(300);
   }
-  while (CAN1.begin(MCP_ANY, CAN_125KBPS, MCP_8MHZ) != CAN_OK) {
+  while (CAN1.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) != CAN_OK) {
     RXLED1;
     delay(300);
     RXLED0;
