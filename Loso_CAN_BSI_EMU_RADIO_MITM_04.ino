@@ -6,9 +6,10 @@
 
 #define SEND_FAKE_BSI_TO_RADIO
 
-// skip COUNT of messages and then print
-#define SKIP_0E6_COUNT 50
-#define SKIP_036_COUNT 50
+// decimation settings
+// skip COUNT of messages each time and then print only
+#define SKIP_0E6_COUNT  1
+//#define SKIP_036_COUNT 50 // not used
 #define SKIP_0F6_COUNT  1
 
 
@@ -450,17 +451,15 @@ void loop() {
 
       default:
         CAN1.sendMsgBuf(rxId, 0, len, rxBuf); // from RADIO to ALL
-        /*
-          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-          sprintf(MsgString, "%s RAD --> %.3lX %d", str_tmp0, rxId, len);
-          Serial.print(MsgString);
-          for (byte i = 0; i < len; i ++) {
+        dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+        sprintf(MsgString, "%s RAD --> %.3lX %d", str_tmp0, rxId, len);
+        Serial.print(MsgString);
+        for (byte i = 0; i < len; i ++) {
           Serial.print(", ");
           sprintf(MsgString, "%.2X", rxBuf[i]);
           Serial.print(MsgString);
-          }
-          Serial.println();
-        */
+        }
+        Serial.println();
     }
   }
 
@@ -531,7 +530,7 @@ void loop() {
         }
         break;
 
-      case 0x21F: // RC under steering wheel
+      case 0x21F: // receive only, RC under steering wheel
         CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
         dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
         sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
@@ -560,7 +559,7 @@ void loop() {
         Serial.println(MsgString);
         break;
       /*
-            case 0x036: // receive only print and drop, we are master here
+            case 0x036: // receive only, print and drop, we are master here
               counter036 ++;
               if (counter036 >= SKIP_036_COUNT) {
                 counter036 = 0;
@@ -642,17 +641,15 @@ void loop() {
 
       default:
         CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
-        /*
-          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-          sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
-          Serial.print(MsgString);
-          for (byte i = 0; i < len; i ++) {
+        dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+        sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
+        Serial.print(MsgString);
+        for (byte i = 0; i < len; i ++) {
           Serial.print(", ");
           sprintf(MsgString, "%.2X", rxBuf[i]);
           Serial.print(MsgString);
-          }
-          Serial.println();
-        */
+        }
+        Serial.println();
     }
   }
 
