@@ -49,16 +49,16 @@ uint32_t now_millis; // to do not ask millis()too often
 uint32_t Timer100_every_ms =  100; // how often the Timer is triggered
 uint32_t next_Timer100_check; // computed value when the Timer is triggered next time
 
-uint32_t Timer500_every_ms =  500;
-uint32_t next_Timer500_check;
+//uint32_t Timer500_every_ms =  500;
+//uint32_t next_Timer500_check;
 
 uint32_t Timer1000_every_ms = 1000;
 uint32_t next_Timer1000_check;
 
-uint32_t Timer600_every_ms = 600; // RDS text field scrooling
+uint32_t Timer600_every_ms = 1000; // RDS text field scrooling
 uint32_t next_Timer600_check;
 
-uint32_t Timer300_every_ms = 300; // RDTXT text field scrooling
+uint32_t Timer300_every_ms = 500; // RDTXT text field scrooling
 uint32_t next_Timer300_check;
 
 
@@ -96,7 +96,7 @@ void setup() {
 
   now_millis = millis();
   next_Timer100_check  = now_millis +  0;
-  next_Timer500_check  = now_millis + 20;
+  //next_Timer500_check  = now_millis + 20;
   next_Timer1000_check = now_millis + 40;
   next_Timer600_check  = now_millis + 60;
   next_Timer300_check  = now_millis + 80;
@@ -224,7 +224,7 @@ void loop() {
     CAN0.sendMsgBuf(0x036, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
   }
-
+/*
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (now_millis >= next_Timer500_check) {
     next_Timer500_check += Timer500_every_ms;
@@ -244,7 +244,7 @@ void loop() {
     CAN0.sendMsgBuf(0x0F6, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
   }
-
+*/
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (now_millis >= next_Timer1000_check) {
     next_Timer1000_check += Timer1000_every_ms;
