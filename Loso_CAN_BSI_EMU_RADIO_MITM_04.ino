@@ -46,11 +46,11 @@ char str_tmp0[12]; // used for dtostr float
 
 uint32_t now_millis; // to do not ask millis()too often
 
-uint32_t Timer100_every_ms =  100; // how often the Timer is triggered
+uint32_t Timer100_every_ms =  150; // how often the Timer is triggered
 uint32_t next_Timer100_check; // computed value when the Timer is triggered next time
 
-//uint32_t Timer500_every_ms =  500;
-//uint32_t next_Timer500_check;
+uint32_t Timer500_every_ms =  500;
+uint32_t next_Timer500_check;
 
 uint32_t Timer1000_every_ms = 1000;
 uint32_t next_Timer1000_check;
@@ -66,13 +66,13 @@ uint32_t next_Timer300_check;
 void setup() {
   pinMode(CAN0_INT, INPUT);
   pinMode(CAN1_INT, INPUT);
-  while (CAN0.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) != CAN_OK) { // blink TX LED until succesfull module init
+  while (CAN0.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) != CAN_OK) { // blink TX LED until succesfull 1st CAN module init
     TXLED1;
     delay(300);
     TXLED0;
     delay(300);
   }
-  while (CAN1.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) != CAN_OK) {
+  while (CAN1.begin(MCP_STDEXT, CAN_125KBPS, MCP_8MHZ) != CAN_OK) { // blink RX LED until succesfull 2nd CAN module init
     RXLED1;
     delay(300);
     RXLED0;
@@ -96,7 +96,7 @@ void setup() {
 
   now_millis = millis();
   next_Timer100_check  = now_millis +  0;
-  //next_Timer500_check  = now_millis + 20;
+  next_Timer500_check  = now_millis + 20;
   next_Timer1000_check = now_millis + 40;
   next_Timer600_check  = now_millis + 60;
   next_Timer300_check  = now_millis + 80;
@@ -224,7 +224,7 @@ void loop() {
     CAN0.sendMsgBuf(0x036, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
   }
-/*
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (now_millis >= next_Timer500_check) {
     next_Timer500_check += Timer500_every_ms;
@@ -244,7 +244,7 @@ void loop() {
     CAN0.sendMsgBuf(0x0F6, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
   }
-*/
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (now_millis >= next_Timer1000_check) {
     next_Timer1000_check += Timer1000_every_ms;
@@ -469,187 +469,188 @@ void loop() {
 
   if (!digitalRead(CAN1_INT)) {               // If CAN1_INT pin is low, read receive buffer
     CAN1.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-    switch (rxId) {
+    if (now_millis  < (next_Timer100_check - 100)) { // allowing critical Timer100 and drop ALL to RADIO ... or making the necessary...
+      switch (rxId) {
+        case 0x0E6: // receive only
+          counter0E6 ++;
+          if (counter0E6 >= SKIP_0E6_COUNT) {
+            counter0E6 = 0;
+            dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+            sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
+            //sprintf(MsgString, "%s RAD %s EMF %.3lX %d", str_tmp0, str_tmp1, rxId, len);
+            float voltage = 0.05 * ((uint16_t)rxBuf[5] + 144);
+            dtostrf(voltage, 5, 2, str_tmp0);
+            sprintf(MsgString, "%s, BatV = %s", MsgString, str_tmp0);
+            Serial.println(MsgString);
+          }
+          break;
 
-      case 0x0E6: // receive only
-        counter0E6 ++;
-        if (counter0E6 >= SKIP_0E6_COUNT) {
-          counter0E6 = 0;
+        case 0x0F6: // receive only
+          counter0F6 ++;
+          if (counter0F6 >= SKIP_0F6_COUNT) {
+            counter0F6 = 0;
+            dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+            sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
+            //sprintf(MsgString, "%s RAD %s EMF %.3lX %d", str_tmp0, str_tmp1, rxId, len);
+            if (rxBuf[0] & 0b10001000) {
+              sprintf(MsgString, "%s, IG_1", MsgString);
+            } else {
+              sprintf(MsgString, "%s, IG_0", MsgString);
+            }
+            if (rxBuf[7] & 0b10000000) {
+              sprintf(MsgString, "%s, RV_1", MsgString);
+            } else {
+              sprintf(MsgString, "%s, RV_0", MsgString);
+            }
+            if (rxBuf[7] & 0b00000001) {
+              sprintf(MsgString, "%s, TL_1", MsgString);
+            } else {
+              sprintf(MsgString, "%s, TL_0", MsgString);
+            }
+            if (rxBuf[7] & 0b00000010) {
+              sprintf(MsgString, "%s, TR_1", MsgString);
+            } else {
+              sprintf(MsgString, "%s, TR_0", MsgString);
+            }
+
+            int8_t coolant = (int8_t)((uint8_t)rxBuf[1] - 39);
+            sprintf(MsgString, "%s, Cool = %d", MsgString, coolant);
+
+            uint32_t odometer = (uint32_t)((uint32_t)rxBuf[2] << 16 | (uint32_t)rxBuf[3] << 8 | (uint32_t)rxBuf[4]);
+            dtostrf(0.1 * odometer, 8, 1, str_tmp0);
+            sprintf(MsgString, "%s, Odom = %s", MsgString, str_tmp0);
+
+            ambient_temperature = rxBuf[6];
+
+            float temperature = 0.5 * ((uint8_t)rxBuf[6] - 79);
+            dtostrf(temperature, 5, 1, str_tmp0);
+            sprintf(MsgString, "%s, Temp = %s", MsgString, str_tmp0);
+
+            Serial.println(MsgString);
+          }
+          break;
+
+        case 0x21F: // RC under steering wheel
+          CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
           dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
           sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
-          //sprintf(MsgString, "%s RAD %s EMF %.3lX %d", str_tmp0, str_tmp1, rxId, len);
-          float voltage = 0.05 * ((uint16_t)rxBuf[5] + 144);
-          dtostrf(voltage, 5, 2, str_tmp0);
-          sprintf(MsgString, "%s, BatV = %s", MsgString, str_tmp0);
+          if (rxBuf[0] & 0b11101110) {
+            if (rxBuf[0] & 0b10000000) {
+              sprintf(MsgString, "%s, Forward", MsgString);
+            }
+            if (rxBuf[0] & 0b01000000) {
+              sprintf(MsgString, "%s, Backward", MsgString);
+            }
+            if (rxBuf[0] & 0b00100000) {
+              sprintf(MsgString, "%s, Unknown", MsgString);
+            }
+            // 0
+            if (rxBuf[0] & 0b00001000) {
+              sprintf(MsgString, "%s, Volume up", MsgString);
+            }
+            if (rxBuf[0] & 0b00000100) {
+              sprintf(MsgString, "%s, Volume down", MsgString);
+            }
+            if (rxBuf[0] & 0b00000010) {
+              sprintf(MsgString, "%s, Source", MsgString);
+            }
+            // 0
+          }
           Serial.println(MsgString);
-        }
-        break;
-
-      case 0x0F6: // receive only
-        counter0F6 ++;
-        if (counter0F6 >= SKIP_0F6_COUNT) {
-          counter0F6 = 0;
-          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-          sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
-          //sprintf(MsgString, "%s RAD %s EMF %.3lX %d", str_tmp0, str_tmp1, rxId, len);
-          if (rxBuf[0] & 0b10001000) {
-            sprintf(MsgString, "%s, IG_1", MsgString);
-          } else {
-            sprintf(MsgString, "%s, IG_0", MsgString);
-          }
-          if (rxBuf[7] & 0b10000000) {
-            sprintf(MsgString, "%s, RV_1", MsgString);
-          } else {
-            sprintf(MsgString, "%s, RV_0", MsgString);
-          }
-          if (rxBuf[7] & 0b00000001) {
-            sprintf(MsgString, "%s, TL_1", MsgString);
-          } else {
-            sprintf(MsgString, "%s, TL_0", MsgString);
-          }
-          if (rxBuf[7] & 0b00000010) {
-            sprintf(MsgString, "%s, TR_1", MsgString);
-          } else {
-            sprintf(MsgString, "%s, TR_0", MsgString);
-          }
-
-          int8_t coolant = (int8_t)((uint8_t)rxBuf[1] - 39);
-          sprintf(MsgString, "%s, Cool = %d", MsgString, coolant);
-
-          uint32_t odometer = (uint32_t)((uint32_t)rxBuf[2] << 16 | (uint32_t)rxBuf[3] << 8 | (uint32_t)rxBuf[4]);
-          dtostrf(0.1 * odometer, 8, 1, str_tmp0);
-          sprintf(MsgString, "%s, Odom = %s", MsgString, str_tmp0);
-
-          ambient_temperature = rxBuf[6];
-
-          float temperature = 0.5 * ((uint8_t)rxBuf[6] - 79);
-          dtostrf(temperature, 5, 1, str_tmp0);
-          sprintf(MsgString, "%s, Temp = %s", MsgString, str_tmp0);
-
-          Serial.println(MsgString);
-        }
-        break;
-
-      case 0x21F: // receive only, RC under steering wheel
-        CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
-        dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-        sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
-        if (rxBuf[0] & 0b11101110) {
-          if (rxBuf[0] & 0b10000000) {
-            sprintf(MsgString, "%s, Forward", MsgString);
-          }
-          if (rxBuf[0] & 0b01000000) {
-            sprintf(MsgString, "%s, Backward", MsgString);
-          }
-          if (rxBuf[0] & 0b00100000) {
-            sprintf(MsgString, "%s, Unknown", MsgString);
-          }
-          // 0
-          if (rxBuf[0] & 0b00001000) {
-            sprintf(MsgString, "%s, Volume up", MsgString);
-          }
-          if (rxBuf[0] & 0b00000100) {
-            sprintf(MsgString, "%s, Volume down", MsgString);
-          }
-          if (rxBuf[0] & 0b00000010) {
-            sprintf(MsgString, "%s, Source", MsgString);
-          }
-          // 0
-        }
-        Serial.println(MsgString);
-        break;
-      /*
-            case 0x036: // receive only, print and drop, we are master here
-              counter036 ++;
-              if (counter036 >= SKIP_036_COUNT) {
-                counter036 = 0;
-                dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-                sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
-                if (rxBuf[4] & 0b00000001) {
-                  sprintf(MsgString, "%s, IGN_1", MsgString);
-                } else {
-                  sprintf(MsgString, "%s, IGN_0", MsgString);
+          break;
+        /*
+              case 0x036: // receive only, print and drop, we are master here
+                counter036 ++;
+                if (counter036 >= SKIP_036_COUNT) {
+                  counter036 = 0;
+                  dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+                  sprintf(MsgString, "%s %.3lX %d", str_tmp0, rxId, len);
+                  if (rxBuf[4] & 0b00000001) {
+                    sprintf(MsgString, "%s, IGN_1", MsgString);
+                  } else {
+                    sprintf(MsgString, "%s, IGN_0", MsgString);
+                  }
+                  Serial.println(MsgString);
                 }
-                Serial.println(MsgString);
-              }
-              break;
-      */
+                break;
+        */
 
-      // drop
-      case 0x036: // drop Ignition state, we are master here
-      case 0x2B6: // BSI last 8 VIN
-        break;
+        // drop
+        case 0x036: // drop Ignition state, we are master here
+        case 0x2B6: // drop BSI last 8 VIN
+          break;
 
-      // by-pass the rest
-      case 0x018:
-      case 0x09F: // flow ctrl 0x0A4
-      case 0x0B6:
-      case 0x0DF:
-      case 0x10C:
-      case 0x110:
-      case 0x11F:
-      case 0x120:
-      case 0x128:
-      case 0x12D:
-      case 0x15B:
-      case 0x15F: // new EMF flow ctrl for 0x2E3 "Bluetooth"
-      case 0x161:
-      case 0x167:
-      case 0x168:
-      case 0x18C:
-      case 0x190:
-      case 0x1A1:
-      case 0x1A8:
-      case 0x1CC:
-      case 0x1D0:
-      case 0x1DF: // new EMF 200ms
-      case 0x217:
-      //case 0x21F: // RC under steering wheel
-      case 0x220:
-      case 0x221:
-      case 0x227:
-      case 0x24C:
-      case 0x257:
-      case 0x260:
-      case 0x261:
-      case 0x28C:
-      case 0x295:
-      case 0x29F: // new EMF flow ctrl for 0x123 "BT Phone"
-      case 0x2A0:
-      case 0x2A1:
-      case 0x2E1:
-      case 0x317:
-      case 0x336:
-      case 0x361:
-      case 0x3A7:
-      case 0x3B6:
-      case 0x3F6:
-      case 0x412:
-      case 0x4A5:
-      case 0x50B:
-      case 0x512:
-      case 0x51F:
-      case 0x525:
-      case 0x52D:
-      case 0x5CB:
-      case 0x5D2:
-      case 0x5DF:
-      case 0x5E5:
-      case 0x5ED:
-        CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
-        break;
+        // by-pass the rest
+        case 0x018:
+        case 0x09F: // flow ctrl 0x0A4
+        case 0x0B6:
+        case 0x0DF:
+        case 0x10C:
+        case 0x110:
+        case 0x11F:
+        case 0x120:
+        case 0x128:
+        case 0x12D:
+        case 0x15B:
+        case 0x15F: // new EMF flow ctrl for 0x2E3 "Bluetooth"
+        case 0x161:
+        case 0x167:
+        case 0x168:
+        case 0x18C:
+        case 0x190:
+        case 0x1A1:
+        case 0x1A8:
+        case 0x1CC:
+        case 0x1D0:
+        case 0x1DF: // new EMF 200ms
+        case 0x217:
+        //case 0x21F: // RC under steering wheel
+        case 0x220:
+        case 0x221:
+        case 0x227:
+        case 0x24C:
+        case 0x257:
+        case 0x260:
+        case 0x261:
+        case 0x28C:
+        case 0x295:
+        case 0x29F: // new EMF flow ctrl for 0x123 "BT Phone"
+        case 0x2A0:
+        case 0x2A1:
+        case 0x2E1:
+        case 0x317:
+        case 0x336:
+        case 0x361:
+        case 0x3A7:
+        case 0x3B6:
+        case 0x3F6:
+        case 0x412:
+        case 0x4A5:
+        case 0x50B:
+        case 0x512:
+        case 0x51F:
+        case 0x525:
+        case 0x52D:
+        case 0x5CB:
+        case 0x5D2:
+        case 0x5DF:
+        case 0x5E5:
+        case 0x5ED:
+          CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
+          break;
 
-      default:
-        CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
-        dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
-        sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
-        Serial.print(MsgString);
-        for (byte i = 0; i < len; i ++) {
-          Serial.print(", ");
-          sprintf(MsgString, "%.2X", rxBuf[i]);
+        default:
+          CAN0.sendMsgBuf(rxId, 0, len, rxBuf); // from ALL to RADIO
+          dtostrf(0.001 * now_millis, 8, 3, str_tmp0);
+          sprintf(MsgString, "%s ALL --> %.3lX %d", str_tmp0, rxId, len);
           Serial.print(MsgString);
-        }
-        Serial.println();
+          for (byte i = 0; i < len; i ++) {
+            Serial.print(", ");
+            sprintf(MsgString, "%.2X", rxBuf[i]);
+            Serial.print(MsgString);
+          }
+          Serial.println();
+      }
     }
   }
 
