@@ -91,7 +91,7 @@ void setup() {
   CAN0.setMode(MCP_NORMAL);
   CAN1.setMode(MCP_NORMAL);
   sprintf(longRDS, "CDC MSG");
-  sprintf(longRDTXT, "    Lorem ipsum dolor sit amet...    ");
+  sprintf(longRDTXT, " CDC TXT CDC TXT CDC TXT CDC TXT ");
   sprintf(fakeSCR, "0");
 
   now_millis = millis();
