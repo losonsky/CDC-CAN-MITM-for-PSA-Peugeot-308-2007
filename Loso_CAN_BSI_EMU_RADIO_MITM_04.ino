@@ -365,6 +365,8 @@ void loop() {
   if (!digitalRead(CAN0_INT)) {               // If CAN0_INT pin is low, read receive buffer
     CAN0.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
     switch (rxId) {
+      case 0x000:
+        break;
 
       case 0x0A4: // CAN-TP
         if (MITM == 0) {
@@ -469,8 +471,11 @@ void loop() {
 
   if (!digitalRead(CAN1_INT)) {               // If CAN1_INT pin is low, read receive buffer
     CAN1.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-    if (now_millis  < (next_Timer100_check - 100)) { // allowing critical Timer100 and drop ALL to RADIO ... or making the necessary...
+    if ( (now_millis  < (next_Timer100_check - 100)) || (rxId == 0x21F) ) { // allowing critical Timer100 and drop ALL to RADIO ... or making the necessary...
       switch (rxId) {
+        case 0x000:
+          break;
+          
         case 0x0E6: // receive only
           counter0E6 ++;
           if (counter0E6 >= SKIP_0E6_COUNT) {
