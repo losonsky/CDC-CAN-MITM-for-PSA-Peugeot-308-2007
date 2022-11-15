@@ -5,11 +5,12 @@
 // CAN1 connected to rest of CAN-INFO
 
 #define SEND_FAKE_BSI_TO_RADIO
+// #define SEND_FAKE_BSI_TO_EMF
 
 // decimation settings
 // skip COUNT of messages each time and then print only
 #define SKIP_0E6_COUNT  1
-//#define SKIP_036_COUNT 50 // not used
+// #define SKIP_036_COUNT 50 // not used
 #define SKIP_0F6_COUNT  1
 
 
@@ -40,6 +41,8 @@ uint8_t longRDTXT[256]; // CDC "1 whatever string \n" -> " whatever string " in 
 uint8_t longRDTXTpointer = 0; // text rotation
 
 uint8_t fakeSCR[256]; // CDC "21" -> enable fake strings on screen, CDC "20" -> disable
+
+uint8_t str_time_sync[256]; // CDC "31" -> starts time sync sequence
 
 char MsgString[256]; // serial string
 char str_tmp0[12]; // used for dtostr float
@@ -103,7 +106,7 @@ void setup() {
 }
 
 uint8_t MITM = 0; // wheter we are doing MITM fake messages
-uint8_t CDCRxMsg = 0; // type of message: 1st string, 2nd string, enable/disable "fake" screen
+uint8_t CDCRxMsg = 0; // type of message: 1st string, 2nd string, enable/disable "fake" screen, time sync
 uint8_t CDCRxPointer = 0; // pointer of incoming message
 
 
@@ -111,6 +114,54 @@ uint8_t counter0F6 = 0; // not every received message should be printed
 uint8_t counter036 = 0;
 uint8_t counter0E6 = 0;
 
+int  clock_sequence = 0;
+
+
+void BTN_NONE(void) {
+  data[0] = 0x00;
+  data[1] = 0x00;
+  data[2] = 0x00;
+  data[3] = 0x00;
+  data[4] = 0x00;
+  data[5] = 0x00;
+  CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+}
+void BTN_MENU(void) {
+  data[0] = 0x40;
+  data[1] = 0x00;
+  data[2] = 0x00;
+  data[3] = 0x00;
+  data[4] = 0x00;
+  data[5] = 0x00;
+  CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+}
+void BTN_OK(void) {
+  data[0] = 0x00;
+  data[1] = 0x00;
+  data[2] = 0x40;
+  data[3] = 0x00;
+  data[4] = 0x00;
+  data[5] = 0x00;
+  CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+}
+void BTN_UP(void) {
+  data[0] = 0x00;
+  data[1] = 0x00;
+  data[2] = 0x00;
+  data[3] = 0x00;
+  data[4] = 0x00;
+  data[5] = 0x40;
+  CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+}
+void BTN_DOWN(void) {
+  data[0] = 0x00;
+  data[1] = 0x00;
+  data[2] = 0x00;
+  data[3] = 0x00;
+  data[4] = 0x00;
+  data[5] = 0x10;
+  CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+}
 
 void loop() {
 
@@ -134,6 +185,9 @@ void loop() {
           if (CDCRxMsg == 2) {
             fakeSCR[CDCRxPointer - 1] = ch; // character
           }
+          if (CDCRxMsg == 3) {
+            str_time_sync[CDCRxPointer - 1] = ch; // character
+          }
         }
         if (CDCRxPointer < 254) {
           CDCRxPointer ++;
@@ -151,6 +205,9 @@ void loop() {
           }
           if (CDCRxMsg == 2) {
             fakeSCR[CDCRxPointer - 1] = ch; // character
+          }
+          if (CDCRxMsg == 3) {
+            str_time_sync[CDCRxPointer - 1] = ch; // character
           }
         }
         if (CDCRxPointer < 254) {
@@ -170,6 +227,30 @@ void loop() {
           if (CDCRxMsg == 2) {
             fakeSCR[CDCRxPointer - 1] = ch; // character
           }
+          if (CDCRxMsg == 3) {
+            str_time_sync[CDCRxPointer - 1] = ch; // character
+          }
+        }
+        if (CDCRxPointer < 254) {
+          CDCRxPointer ++;
+        }
+        break;
+      case '3':
+        if (CDCRxPointer == 0) { // time sync
+          CDCRxMsg = 3;
+        } else {
+          if (CDCRxMsg == 0) {
+            longRDS[CDCRxPointer - 1] = ch; // character
+          }
+          if (CDCRxMsg == 1) {
+            longRDTXT[CDCRxPointer - 1] = ch; // character
+          }
+          if (CDCRxMsg == 2) {
+            fakeSCR[CDCRxPointer - 1] = ch; // character
+          }
+          if (CDCRxMsg == 3) {
+            str_time_sync[CDCRxPointer - 1] = ch; // character
+          }
         }
         if (CDCRxPointer < 254) {
           CDCRxPointer ++;
@@ -185,6 +266,10 @@ void loop() {
         if (CDCRxMsg == 2) {
           fakeSCR[CDCRxPointer - 1] = 0x00; // string 0
         }
+        if (CDCRxMsg == 3) {
+          str_time_sync[CDCRxPointer - 1] = 0x00; // string 0
+          clock_sequence = 1;
+        }
         CDCRxPointer = 0;
         break;
       default:
@@ -197,6 +282,9 @@ void loop() {
           }
           if (CDCRxMsg == 2) {
             fakeSCR[CDCRxPointer - 1] = ch; // character
+          }
+          if (CDCRxMsg == 3) {
+            str_time_sync[CDCRxPointer - 1] = ch; // character
           }
           if (CDCRxPointer < 254) {
             CDCRxPointer ++;
@@ -219,10 +307,12 @@ void loop() {
     data[5] = 0x00; // const
     data[6] = 0x00; // const
     data[7] = 0xA0; // const
-    delay(1);
 #ifdef SEND_FAKE_BSI_TO_RADIO
     CAN0.sendMsgBuf(0x036, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
+#ifdef SEND_FAKE_BSI_TO_EMF
+    CAN1.sendMsgBuf(0x036, 0, 8, data);
+#endif // #ifdef SEND_FAKE_BSI_TO_EMF
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -239,11 +329,119 @@ void loop() {
     data[5] = 0x63; // ??????? temperature 10 degrees of Celsius
     data[6] = ambient_temperature; // ambient temperature 10 degrees of Celsius on EMF
     data[7] = 0x00; // directions light
-    delay(1);
 #ifdef SEND_FAKE_BSI_TO_RADIO
     CAN0.sendMsgBuf(0x0F6, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
+#ifdef SEND_FAKE_BSI_TO_EMF
+    CAN1.sendMsgBuf(0x0F6, 0, 8, data);
+#endif // #ifdef SEND_FAKE_BSI_TO_EMF
+
+    // sequence for button pressing EMF's time and date sync
+    if (now_millis > 4000) {
+      if (clock_sequence > 0) {
+        switch (clock_sequence) {
+          case 1:
+            BTN_MENU();
+            break;
+          case 2:
+            BTN_NONE();
+            break;
+          case 3:
+            BTN_OK();
+            break;
+          case 4:
+            BTN_NONE();
+            break;
+          case 5:
+            BTN_OK();
+            break;
+          case 6:
+            BTN_NONE();
+            break;
+          case 7:
+            BTN_OK();
+            break;
+          case 8:
+            BTN_NONE();
+            break;
+
+          case 9:
+            BTN_DOWN();
+            break;
+          case 10:
+            BTN_NONE();
+            break;
+          case 11:
+            BTN_DOWN();
+            break;
+          case 12:
+            BTN_NONE();
+            break;
+          case 13:
+            BTN_DOWN();
+            break;
+          case 14:
+            BTN_NONE();
+            break;
+          case 15:
+            BTN_DOWN();
+            break;
+          case 16:
+            BTN_NONE();
+            break;
+
+
+          case 17:
+            BTN_OK();
+            break;
+          case 18:
+            BTN_NONE();
+            break;
+
+          case 19:
+            BTN_UP();
+            break;
+          case 20:
+            BTN_NONE();
+            break;
+
+          case 21:
+            BTN_OK();
+            break;
+          case 22:
+            BTN_NONE();
+            break;
+
+          case 23:
+            BTN_DOWN();
+            break;
+          case 24:
+            BTN_NONE();
+            break;
+          case 25:
+            BTN_DOWN();
+            break;
+          case 26:
+            BTN_NONE();
+            break;
+
+          case 27:
+            BTN_OK();
+            break;
+          case 28:
+            BTN_NONE();
+            break;
+
+        }
+        if (clock_sequence >= 28) {
+          clock_sequence = 0;
+        } else {
+          clock_sequence ++;
+        }
+      }
+    }
   }
+
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   if (now_millis >= next_Timer1000_check) {
@@ -259,7 +457,6 @@ void loop() {
     data[5] = 0x31;
     data[6] = 0x37;
     data[7] = 0x35;
-    delay(1);
 #ifdef SEND_FAKE_BSI_TO_RADIO
     CAN0.sendMsgBuf(0x2B6, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
@@ -475,7 +672,7 @@ void loop() {
       switch (rxId) {
         case 0x000:
           break;
-          
+
         case 0x0E6: // receive only
           counter0E6 ++;
           if (counter0E6 >= SKIP_0E6_COUNT) {
@@ -589,17 +786,18 @@ void loop() {
         case 0x018:
         case 0x09F: // flow ctrl 0x0A4
         case 0x0B6:
-        case 0x0DF:
+        case 0x0DF: // autowp display menu
+        // 3, 90, 00, 70 icon menu
         case 0x10C:
         case 0x110:
         case 0x11F:
         case 0x120:
         case 0x128:
         case 0x12D:
-        case 0x15B:
+        case 0x15B: // autowp display???
         case 0x15F: // new EMF flow ctrl for 0x2E3 "Bluetooth"
         case 0x161:
-        case 0x167:
+        case 0x167: // autowp display status
         case 0x168:
         case 0x18C:
         case 0x190:
@@ -628,13 +826,13 @@ void loop() {
         case 0x361:
         case 0x3A7:
         case 0x3B6:
-        case 0x3F6:
+        case 0x3F6: // autowp Date (possible) source EMF 100%
         case 0x412:
-        case 0x4A5:
+        case 0x4A5: // EMF -> Radio 8, 50, F8, EB, 80, 03, 04, 05, 06
         case 0x50B:
         case 0x512:
         case 0x51F:
-        case 0x525:
+        case 0x525: // autowp display???
         case 0x52D:
         case 0x5CB:
         case 0x5D2:
