@@ -705,14 +705,14 @@ void loop() {
               sprintf(MsgString, "%s, RV_0", MsgString);
             }
             if (rxBuf[7] & 0b00000001) {
-              sprintf(MsgString, "%s, TL_1", MsgString);
-            } else {
-              sprintf(MsgString, "%s, TL_0", MsgString);
-            }
-            if (rxBuf[7] & 0b00000010) {
               sprintf(MsgString, "%s, TR_1", MsgString);
             } else {
               sprintf(MsgString, "%s, TR_0", MsgString);
+            }
+            if (rxBuf[7] & 0b00000010) {
+              sprintf(MsgString, "%s, TL_1", MsgString);
+            } else {
+              sprintf(MsgString, "%s, TL_0", MsgString);
             }
 
             int8_t coolant = (int8_t)((uint8_t)rxBuf[1] - 39);
