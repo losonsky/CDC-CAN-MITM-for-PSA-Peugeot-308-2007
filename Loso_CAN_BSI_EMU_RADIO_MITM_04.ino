@@ -49,7 +49,7 @@ char str_tmp0[12]; // used for dtostr float
 
 uint32_t now_millis; // to do not ask millis()too often
 
-uint32_t Timer100_every_ms =  150; // how often the Timer is triggered
+uint32_t Timer100_every_ms =  100; // how often the Timer is triggered
 uint32_t next_Timer100_check; // computed value when the Timer is triggered next time
 
 uint32_t Timer500_every_ms =  500;
@@ -337,107 +337,105 @@ void loop() {
 #endif // #ifdef SEND_FAKE_BSI_TO_EMF
 
     // sequence for button pressing EMF's time and date sync
-    if (now_millis > 4000) {
-      if (clock_sequence > 0) {
-        switch (clock_sequence) {
-          case 1:
-            BTN_MENU();
-            break;
-          case 2:
-            BTN_NONE();
-            break;
-          case 3:
-            BTN_OK();
-            break;
-          case 4:
-            BTN_NONE();
-            break;
-          case 5:
-            BTN_OK();
-            break;
-          case 6:
-            BTN_NONE();
-            break;
-          case 7:
-            BTN_OK();
-            break;
-          case 8:
-            BTN_NONE();
-            break;
+    if (clock_sequence > 0) {
+      switch (clock_sequence) {
+        case 1:
+          BTN_MENU();
+          break;
+        case 2:
+          BTN_NONE();
+          break;
+        case 3:
+          BTN_OK();
+          break;
+        case 4:
+          BTN_NONE();
+          break;
+        case 5:
+          BTN_OK();
+          break;
+        case 6:
+          BTN_NONE();
+          break;
+        case 7:
+          BTN_OK();
+          break;
+        case 8:
+          BTN_NONE();
+          break;
 
-          case 9:
-            BTN_DOWN();
-            break;
-          case 10:
-            BTN_NONE();
-            break;
-          case 11:
-            BTN_DOWN();
-            break;
-          case 12:
-            BTN_NONE();
-            break;
-          case 13:
-            BTN_DOWN();
-            break;
-          case 14:
-            BTN_NONE();
-            break;
-          case 15:
-            BTN_DOWN();
-            break;
-          case 16:
-            BTN_NONE();
-            break;
+        case 9:
+          BTN_DOWN();
+          break;
+        case 10:
+          BTN_NONE();
+          break;
+        case 11:
+          BTN_DOWN();
+          break;
+        case 12:
+          BTN_NONE();
+          break;
+        case 13:
+          BTN_DOWN();
+          break;
+        case 14:
+          BTN_NONE();
+          break;
+        case 15:
+          BTN_DOWN();
+          break;
+        case 16:
+          BTN_NONE();
+          break;
 
 
-          case 17:
-            BTN_OK();
-            break;
-          case 18:
-            BTN_NONE();
-            break;
+        case 17:
+          BTN_OK();
+          break;
+        case 18:
+          BTN_NONE();
+          break;
 
-          case 19:
-            BTN_UP();
-            break;
-          case 20:
-            BTN_NONE();
-            break;
+        case 19:
+          BTN_UP();
+          break;
+        case 20:
+          BTN_NONE();
+          break;
 
-          case 21:
-            BTN_OK();
-            break;
-          case 22:
-            BTN_NONE();
-            break;
+        case 21:
+          BTN_OK();
+          break;
+        case 22:
+          BTN_NONE();
+          break;
 
-          case 23:
-            BTN_DOWN();
-            break;
-          case 24:
-            BTN_NONE();
-            break;
-          case 25:
-            BTN_DOWN();
-            break;
-          case 26:
-            BTN_NONE();
-            break;
+        case 23:
+          BTN_DOWN();
+          break;
+        case 24:
+          BTN_NONE();
+          break;
+        case 25:
+          BTN_DOWN();
+          break;
+        case 26:
+          BTN_NONE();
+          break;
 
-          case 27:
-            BTN_OK();
-            break;
-          case 28:
-            BTN_NONE();
-            break;
+        case 27:
+          BTN_OK();
+          break;
+        case 28:
+          BTN_NONE();
+          break;
 
-        }
-        if (clock_sequence >= 28) {
-          clock_sequence = 0;
-        } else {
-          clock_sequence ++;
-        }
+      }
+      if (clock_sequence >= 28) {
+        clock_sequence = 0;
+      } else {
+        clock_sequence ++;
       }
     }
   }
@@ -668,7 +666,7 @@ void loop() {
 
   if (!digitalRead(CAN1_INT)) {               // If CAN1_INT pin is low, read receive buffer
     CAN1.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-    if ( (now_millis  < (next_Timer100_check - 100)) || (rxId == 0x21F) ) { // allowing critical Timer100 and drop ALL to RADIO ... or making the necessary...
+    if ( (now_millis  < (next_Timer100_check - 50)) || (rxId == 0x21F) ) { // allowing critical Timer100 and drop ALL to RADIO ... or making the necessary...
       switch (rxId) {
         case 0x000:
           break;
