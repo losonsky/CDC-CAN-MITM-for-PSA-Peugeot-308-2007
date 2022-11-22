@@ -49,20 +49,20 @@ char str_tmp0[12]; // used for dtostr float
 
 uint32_t now_millis; // to do not ask millis()too often
 
-uint32_t Timer100_every_ms =  100; // how often the Timer is triggered
-uint32_t next_Timer100_check; // computed value when the Timer is triggered next time
+uint32_t TimerBSI_every_ms =   100; // how often the Timer is triggered
+uint32_t next_TimerBSI_check; // computed value when the Timer is triggered next time
 
-uint32_t Timer500_every_ms =  500;
+uint32_t Timer500_every_ms =   500;
 uint32_t next_Timer500_check;
 
-uint32_t Timer1000_every_ms = 1000;
-uint32_t next_Timer1000_check;
+uint32_t TimerVIN_every_ms =  1000;
+uint32_t next_TimerVIN_check;
 
-uint32_t Timer600_every_ms = 1000; // RDS text field scrooling
-uint32_t next_Timer600_check;
+uint32_t TimerRDS_every_ms =  1000; // RDS text field scrooling
+uint32_t next_TimerRDS_check;
 
-uint32_t Timer300_every_ms = 500; // RDTXT text field scrooling
-uint32_t next_Timer300_check;
+uint32_t TimerRDTXT_every_ms = 500; // RDTXT text field scrooling
+uint32_t next_TimerRDTXT_check;
 
 
 
@@ -93,16 +93,16 @@ void setup() {
   */
   CAN0.setMode(MCP_NORMAL);
   CAN1.setMode(MCP_NORMAL);
-  sprintf(longRDS, "CDC MSG");
-  sprintf(longRDTXT, " CDC TXT CDC TXT CDC TXT CDC TXT ");
+  sprintf(longRDS, " RDS RDS RDS ");
+  sprintf(longRDTXT, " RDTXT RDTXT RDTXT RDTXT RDTXT ");
   sprintf(fakeSCR, "0");
 
   now_millis = millis();
-  next_Timer100_check  = now_millis +  0;
-  next_Timer500_check  = now_millis + 20;
-  next_Timer1000_check = now_millis + 40;
-  next_Timer600_check  = now_millis + 60;
-  next_Timer300_check  = now_millis + 80;
+  next_TimerBSI_check   = now_millis +  0;
+  next_Timer500_check   = now_millis + 20;
+  next_TimerVIN_check   = now_millis + 40;
+  next_TimerRDS_check   = now_millis + 60;
+  next_TimerRDTXT_check = now_millis + 80;
 }
 
 uint8_t MITM = 0; // wheter we are doing MITM fake messages
@@ -125,7 +125,9 @@ void BTN_NONE(void) {
   data[4] = 0x00;
   data[5] = 0x00;
   CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+  delay(1);
 }
+
 void BTN_MENU(void) {
   data[0] = 0x40;
   data[1] = 0x00;
@@ -134,7 +136,9 @@ void BTN_MENU(void) {
   data[4] = 0x00;
   data[5] = 0x00;
   CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+  delay(1);
 }
+
 void BTN_OK(void) {
   data[0] = 0x00;
   data[1] = 0x00;
@@ -143,7 +147,9 @@ void BTN_OK(void) {
   data[4] = 0x00;
   data[5] = 0x00;
   CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+  delay(1);
 }
+
 void BTN_UP(void) {
   data[0] = 0x00;
   data[1] = 0x00;
@@ -152,7 +158,9 @@ void BTN_UP(void) {
   data[4] = 0x00;
   data[5] = 0x40;
   CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+  delay(1);
 }
+
 void BTN_DOWN(void) {
   data[0] = 0x00;
   data[1] = 0x00;
@@ -161,6 +169,7 @@ void BTN_DOWN(void) {
   data[4] = 0x00;
   data[5] = 0x10;
   CAN1.sendMsgBuf(0x3E5, 0, 6, data);
+  delay(1);
 }
 
 void loop() {
@@ -294,8 +303,8 @@ void loop() {
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (now_millis >= next_Timer100_check) {
-    next_Timer100_check += Timer100_every_ms;
+  if (now_millis >= next_TimerBSI_check) {
+    next_TimerBSI_check += TimerBSI_every_ms;
 
     // BSI 036 morcibacsi uint8_t data1[] = { 0x0E, 0x00, 0x05, 0x2F, 0x21, 0x80, 0x00, 0xA0 };
     // BSI 036 ignition
@@ -313,6 +322,7 @@ void loop() {
 #ifdef SEND_FAKE_BSI_TO_EMF
     CAN1.sendMsgBuf(0x036, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_EMF
+    delay(1);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -335,6 +345,7 @@ void loop() {
 #ifdef SEND_FAKE_BSI_TO_EMF
     CAN1.sendMsgBuf(0x0F6, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_EMF
+    delay(1);
 
     // sequence for button pressing EMF's time and date sync
     if (clock_sequence > 0) {
@@ -442,8 +453,8 @@ void loop() {
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (now_millis >= next_Timer1000_check) {
-    next_Timer1000_check += Timer1000_every_ms;
+  if (now_millis >= next_TimerVIN_check) {
+    next_TimerVIN_check += TimerVIN_every_ms;
 
     // 55094175
     // BSI 2B6 10 - 17 ASCII VIN // anti theft // 35 35 30 39 34 31 37 35
@@ -458,11 +469,12 @@ void loop() {
 #ifdef SEND_FAKE_BSI_TO_RADIO
     CAN0.sendMsgBuf(0x2B6, 0, 8, data);
 #endif // #ifdef SEND_FAKE_BSI_TO_RADIO
+    delay(1);
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (now_millis >= next_Timer600_check) {
-    next_Timer600_check += Timer600_every_ms;
+  if (now_millis >= next_TimerRDS_check) {
+    next_TimerRDS_check += TimerRDS_every_ms;
 
     if (MITM == 1) {
       int longRDSlength = 0;
@@ -490,66 +502,67 @@ void loop() {
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-  if (now_millis >= next_Timer300_check) {
-    next_Timer300_check += Timer300_every_ms;
+  if (now_millis >= next_TimerRDTXT_check) {
+    if (now_millis  < (next_TimerBSI_check - 50)) {
+      next_TimerRDTXT_check += TimerRDTXT_every_ms;
 
-    if (MITM == 1) {
-      int longRDTXTlength = 0;
-      while ( (longRDTXT[longRDTXTlength] != 0) && (longRDTXTlength < 255) ) {
-        longRDTXTlength ++;
-      }
+      if (MITM == 1) {
+        int longRDTXTlength = 0;
+        while ( (longRDTXT[longRDTXTlength] != 0) && (longRDTXTlength < 255) ) {
+          longRDTXTlength ++;
+        }
 
-      data[0] = 0x10; // header CAN TP First frame 6 bytes
-      data[1] = 27; // header # bytes in payload
-      data[2] = 0x10; // 0x10 RDTXT, 0x20 CDTXT
-      data[3] = 0x00;
-      data[4] = 0x58;
-      data[5] = 0x00;
-      data[6] = longRDTXT[longRDTXTpointer +  0];
-      data[7] = longRDTXT[longRDTXTpointer +  1];
-      CAN1.sendMsgBuf(0x0A4, 0, 8, data);
-      delay(5);
+        data[0] = 0x10; // header CAN TP First frame 6 bytes
+        data[1] = 27; // header # bytes in payload
+        data[2] = 0x10; // 0x10 RDTXT, 0x20 CDTXT
+        data[3] = 0x00;
+        data[4] = 0x58;
+        data[5] = 0x00;
+        data[6] = longRDTXT[longRDTXTpointer +  0];
+        data[7] = longRDTXT[longRDTXTpointer +  1];
+        CAN1.sendMsgBuf(0x0A4, 0, 8, data);
+        delay(1);
 
-      data[0] = 0x21; // CAN TP Consecutive frame 7 bytes
-      data[1] = longRDTXT[longRDTXTpointer +  2];
-      data[2] = longRDTXT[longRDTXTpointer +  3];
-      data[3] = longRDTXT[longRDTXTpointer +  4];
-      data[4] = longRDTXT[longRDTXTpointer +  5];
-      data[5] = longRDTXT[longRDTXTpointer +  6];
-      data[6] = longRDTXT[longRDTXTpointer +  7];
-      data[7] = longRDTXT[longRDTXTpointer +  8];
-      CAN1.sendMsgBuf(0x0A4, 0, 8, data);
-      delay(5);
+        data[0] = 0x21; // CAN TP Consecutive frame 7 bytes
+        data[1] = longRDTXT[longRDTXTpointer +  2];
+        data[2] = longRDTXT[longRDTXTpointer +  3];
+        data[3] = longRDTXT[longRDTXTpointer +  4];
+        data[4] = longRDTXT[longRDTXTpointer +  5];
+        data[5] = longRDTXT[longRDTXTpointer +  6];
+        data[6] = longRDTXT[longRDTXTpointer +  7];
+        data[7] = longRDTXT[longRDTXTpointer +  8];
+        CAN1.sendMsgBuf(0x0A4, 0, 8, data);
+        delay(1);
 
-      data[0] = 0x22; // CAN TP Consecutive frame 7 bytes
-      data[1] = longRDTXT[longRDTXTpointer +  9];
-      data[2] = longRDTXT[longRDTXTpointer + 10];
-      data[3] = longRDTXT[longRDTXTpointer + 11];
-      data[4] = longRDTXT[longRDTXTpointer + 12];
-      data[5] = longRDTXT[longRDTXTpointer + 13];
-      data[6] = longRDTXT[longRDTXTpointer + 14];
-      data[7] = longRDTXT[longRDTXTpointer + 15];
-      CAN1.sendMsgBuf(0x0A4, 0, 8, data);
-      delay(5);
+        data[0] = 0x22; // CAN TP Consecutive frame 7 bytes
+        data[1] = longRDTXT[longRDTXTpointer +  9];
+        data[2] = longRDTXT[longRDTXTpointer + 10];
+        data[3] = longRDTXT[longRDTXTpointer + 11];
+        data[4] = longRDTXT[longRDTXTpointer + 12];
+        data[5] = longRDTXT[longRDTXTpointer + 13];
+        data[6] = longRDTXT[longRDTXTpointer + 14];
+        data[7] = longRDTXT[longRDTXTpointer + 15];
+        CAN1.sendMsgBuf(0x0A4, 0, 8, data);
+        delay(1);
 
-      data[0] = 0x23; // CAN TP Consecutive frame 7 bytes
-      data[1] = longRDTXT[longRDTXTpointer + 16];
-      data[2] = longRDTXT[longRDTXTpointer + 17];
-      data[3] = longRDTXT[longRDTXTpointer + 18];
-      data[4] = ' ';//longRDTXT[longRDTXTpointer + 19];
-      data[5] = ' ';
-      data[6] = ' ';
-      data[7] = ' ';
-      CAN1.sendMsgBuf(0x0A4, 0, 8, data);
-      delay(5);
-      if (longRDTXTlength > 18) {
-        longRDTXTpointer = (longRDTXTpointer + 1) % (longRDTXTlength - 17);
-      } else {
-        longRDTXTpointer = 0;
+        data[0] = 0x23; // CAN TP Consecutive frame 7 bytes
+        data[1] = longRDTXT[longRDTXTpointer + 16];
+        data[2] = longRDTXT[longRDTXTpointer + 17];
+        data[3] = longRDTXT[longRDTXTpointer + 18];
+        data[4] = ' ';//longRDTXT[longRDTXTpointer + 19];
+        data[5] = ' ';
+        data[6] = ' ';
+        data[7] = ' ';
+        CAN1.sendMsgBuf(0x0A4, 0, 8, data);
+        delay(1);
+        if (longRDTXTlength > 18) {
+          longRDTXTpointer = (longRDTXTpointer + 1) % (longRDTXTlength - 17);
+        } else {
+          longRDTXTpointer = 0;
+        }
       }
     }
   }
-
 
 
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -660,13 +673,15 @@ void loop() {
     }
   }
 
+  delay(1);
+
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
   if (!digitalRead(CAN1_INT)) {               // If CAN1_INT pin is low, read receive buffer
     CAN1.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-    if ( (now_millis  < (next_Timer100_check - 50)) || (rxId == 0x21F) ) { // allowing critical Timer100 and drop ALL to RADIO ... or making the necessary...
+    if ( (now_millis  < (next_TimerBSI_check - 30)) || (rxId == 0x21F) ) { // allowing critical TimerBSI and drop ALL to RADIO ... or making the necessary...
       switch (rxId) {
         case 0x000:
           break;
@@ -856,4 +871,5 @@ void loop() {
   }
 
   delay(1); // main loop delay
+
 }
