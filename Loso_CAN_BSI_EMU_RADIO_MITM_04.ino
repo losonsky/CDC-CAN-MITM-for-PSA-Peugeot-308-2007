@@ -9,9 +9,9 @@
 
 // decimation settings
 // skip COUNT of messages each time and then print only
-#define SKIP_0E6_COUNT  1
+#define SKIP_0E6_COUNT  5
 // #define SKIP_036_COUNT 50 // not used
-#define SKIP_0F6_COUNT  1
+#define SKIP_0F6_COUNT  2
 
 
 #include <mcp_can.h>
@@ -111,7 +111,7 @@ uint8_t CDCRxPointer = 0; // pointer of incoming message
 
 
 uint8_t counter0F6 = 0; // not every received message should be printed
-uint8_t counter036 = 0;
+// uint8_t counter036 = 0;
 uint8_t counter0E6 = 0;
 
 int  clock_sequence = 0;
@@ -681,7 +681,7 @@ void loop() {
 
   if (!digitalRead(CAN1_INT)) {               // If CAN1_INT pin is low, read receive buffer
     CAN1.readMsgBuf(&rxId, &len, rxBuf);      // Read data: len = data length, buf = data byte(s)
-    if ( (now_millis  < (next_TimerBSI_check - 30)) || (rxId == 0x21F) ) { // allowing critical TimerBSI and drop ALL to RADIO ... or making the necessary...
+    if ( (now_millis  < (next_TimerBSI_check - 30)) || (rxId == 0x21F) || (rxId == 0x0E6) || (rxId == 0x0F6) ) { // allowing critical TimerBSI and drop ALL to RADIO ... or making the necessary...
       switch (rxId) {
         case 0x000:
           break;
